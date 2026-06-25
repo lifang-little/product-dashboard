@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品创新全流程看板 1.0</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#0a0e27;--card:#111738;--border:#1e2a5a;
+    --accent:#4f8cff;--accent2:#36d1c4;--accent3:#f7b731;
+    --text:#e0e6ff;--text2:#8a94c0;--text3:#5a6390;
+    --danger:#ff5c72;--success:#2ecc71;--warn:#f39c12;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'PingFang SC','Microsoft YaHei',sans-serif;overflow-x:hidden;}
+  .dashboard{padding:20px 28px 40px;max-width:1920px;margin:0 auto;}
+
+  /* Header */
+  .main-header{text-align:center;padding:24px 0 8px;position:relative;}
+  .main-header h1{font-size:28px;font-weight:700;letter-spacing:6px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .main-header .sub{color:var(--text2);font-size:13px;margin-top:4px;letter-spacing:2px;}
+
+  /* Layer */
+  .layer{margin-top:24px;border:1px solid var(--border);border-radius:14px;overflow:hidden;
+    background:linear-gradient(135deg,rgba(17,23,56,.95),rgba(10,14,39,.98));}
+  .layer-header{padding:14px 24px;display:flex;align-items:center;gap:12px;
+    background:linear-gradient(90deg,rgba(79,140,255,.12),rgba(54,209,196,.06));
+    border-bottom:1px solid var(--border);}
+  .layer-badge{font-size:11px;padding:3px 12px;border-radius:20px;font-weight:600;letter-spacing:1px;}
+  .badge-strategy{background:linear-gradient(90deg,#4f8cff,#6c5ce7);color:#fff;}
+  .badge-tactics{background:linear-gradient(90deg,#36d1c4,#00b894);color:#fff;}
+  .badge-ops{background:linear-gradient(90deg,#f7b731,#e17055);color:#fff;}
+  .layer-title{font-size:17px;font-weight:700;letter-spacing:3px;}
+  .layer-freq{margin-left:auto;font-size:12px;color:var(--text3);}
+
+  /* Row */
+  .row{display:flex;gap:16px;padding:16px 20px;flex-wrap:wrap;}
+
+  /* Card */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;
+    padding:14px 16px;flex:1;min-width:280px;display:flex;flex-direction:column;gap:10px;}
+  .card-title{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--accent);
+    padding-bottom:6px;border-bottom:1px solid rgba(79,140,255,.15);display:flex;align-items:center;gap:6px;}
+  .card-title::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--accent);}
+  .chart-box{width:100%;min-height:220px;flex:1;}
+  .chart-box.tall{min-height:280px;}
+  .chart-box.short{min-height:180px;}
+
+  /* KPI cards */
+  .kpi-row{display:flex;gap:12px;flex-wrap:wrap;}
+  .kpi-card{flex:1;min-width:140px;background:linear-gradient(135deg,rgba(79,140,255,.08),rgba(54,209,196,.05));
+    border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center;}
+  .kpi-label{font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px;}
+  .kpi-value{font-size:22px;font-weight:700;}
+  .kpi-value.blue{color:var(--accent);}
+  .kpi-value.green{color:var(--success);}
+  .kpi-value.yellow{color:var(--accent3);}
+  .kpi-value.cyan{color:var(--accent2);}
+
+  /* Progress bar */
+  .progress-wrap{margin-top:6px;}
+  .progress-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between;}
+  .progress-bar{height:20px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;position:relative;}
+  .progress-fill{height:100%;border-radius:10px;transition:width 1.5s ease;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));position:relative;}
+  .progress-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:30px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.2));}
+  .progress-pct{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:#fff;z-index:2;}
+
+  /* Responsive */
+  @media(max-width:1200px){.row{flex-direction:column;}.card{min-width:100%;}}
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- Main Header -->
+  <div class="main-header">
+    <h1>产品创新全流程看板</h1>
+    <div class="sub">PRODUCT INNOVATION FULL-PROCESS DASHBOARD v1.0</div>
+  </div>
+
+  <!-- ==================== 战略层 ==================== -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-strategy">战略层</span>
+      <span class="layer-title">高管总览看板</span>
+      <span class="layer-freq">刷新频率：月度 / 季度</span>
+    </div>
+    <div class="row">
+      <!-- 开发需求 -->
+      <div class="card" style="flex:1.2;">
+        <div class="card-title">开发需求</div>
+        <div id="c_pie" class="chart-box short"></div>
+        <div id="c_bar_priority" class="chart-box short"></div>
+        <div id="c_line_change" class="chart-box short"></div>
+      </div>
+      <!-- 质量标准确定 -->
+      <div class="card" style="flex:1;">
+        <div class="card-title">质量标准确定</div>
+        <div id="c_radar" class="chart-box tall"></div>
+        <div id="c_gantt" class="chart-box tall"></div>
+      </div>
+      <!-- 产品下线 -->
+      <div class="card" style="flex:1.5;">
+        <div class="card-title">产品下线</div>
+        <div id="c_scurve" class="chart-box tall"></div>
+        <div id="c_milestone" class="chart-box short"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 战术层 ==================== -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-tactics">战术层</span>
+      <span class="layer-title">部门管理监控看板</span>
+      <span class="layer-freq">刷新频率：周度</span>
+    </div>
+    <div class="row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">质量要求输入</div>
+        <div id="c_gauge" class="chart-box short"></div>
+        <div id="c_heatmap" class="chart-box short"></div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">研发</div>
+        <div id="c_stack_bar" class="chart-box short"></div>
+        <div id="c_bullet" class="chart-box short"></div>
+      </div>
+      <div class="card" style="flex:1.8;">
+        <div class="card-title">研发交付 / 质检结果</div>
+        <div id="c_funnel" class="chart-box tall"></div>
+        <div id="c_bubble" class="chart-box short"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">转产生产</div>
+        <div id="c_scatter" class="chart-box short"></div>
+        <div id="c_matrix_heat" class="chart-box short"></div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">产品变更优化升级</div>
+        <div id="c_tree" class="chart-box short"></div>
+        <div id="c_compare_bar" class="chart-box short"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 操作层 ==================== -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-ops">操作层</span>
+      <span class="layer-title">一线执行监控看板</span>
+      <span class="layer-freq">刷新频率：每日 / 实时</span>
+    </div>
+    <div class="row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">安排放行上线</div>
+        <div id="c_boxplot" class="chart-box short"></div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>超时比例</span><span>73%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:73%;background:linear-gradient(90deg,var(--warn),var(--danger));"><span class="progress-pct">73%</span></div></div>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">生产处理</div>
+        <div id="c_pareto" class="chart-box short"></div>
+        <div id="c_area" class="chart-box short"></div>
+      </div>
+      <div class="card" style="flex:1.8;">
+        <div class="card-title">技术支持</div>
+        <div id="c_sankey" class="chart-box tall"></div>
+        <div id="c_recurrence" class="chart-box short"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 市场推广销售 ==================== -->
+  <div class="layer">
+    <div class="layer-header">
+      <span class="layer-badge badge-strategy">战略层</span>
+      <span class="layer-title">市场推广销售</span>
+      <span class="layer-freq">刷新频率：月度</span>
+    </div>
+    <div class="row">
+      <div class="card" style="flex:2.5;">
+        <div class="card-title">双轴组合图（销售额 + 毛利率）</div>
+        <div id="c_dual_axis" class="chart-box tall"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="kpi-row" style="width:100%;padding:0 20px 16px;">
+        <div class="kpi-card"><div class="kpi-label">上市时间</div><div class="kpi-value blue">2026-06-23</div></div>
+        <div class="kpi-card"><div class="kpi-label">首月销售额</div><div class="kpi-value green">¥1,280,000</div></div>
+        <div class="kpi-card"><div class="kpi-label">首月销量</div><div class="kpi-value cyan">8,520 pcs</div></div>
+        <div class="kpi-card"><div class="kpi-label">毛利率</div><div class="kpi-value yellow">62.3%</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Theme base ── */
+const T = {
+  textStyle:{color:'#8a94c0'},
+  titleTextStyle:{color:'#e0e6ff',fontSize:13,fontWeight:600},
+  axisLine:{lineStyle:{color:'#1e2a5a'}},
+  splitLine:{lineStyle:{color:'rgba(30,42,90,.5)'}},
+  axisLabel:{color:'#8a94c0',fontSize:10},
+  legendTextStyle:{color:'#8a94c0',fontSize:11},
+  tooltip:{backgroundColor:'rgba(17,23,56,.95)',borderColor:'#1e2a5a',textStyle:{color:'#e0e6ff',fontSize:12}},
+};
+
+function opt(override){return Object.assign({backgroundColor:'transparent',grid:{left:40,right:20,top:40,bottom:30,containLabel:true},
+  textStyle:T.textStyle,tooltip:T.tooltip},override);}
+
+/* ── 1. 饼图：需求来源分布 ── */
+new echarts.init(document.getElementById('c_pie')).setOption(opt({
+  title:{text:'需求来源分布占比',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{bottom:0,textStyle:T.legendTextStyle},
+  series:[{type:'pie',radius:['40%','68%'],center:['50%','48%'],
+    itemStyle:{borderRadius:6,borderColor:'#111738',borderWidth:2},
+    label:{color:'#8a94c0',fontSize:10},
+    data:[
+      {value:35,name:'市场调研',itemStyle:{color:'#4f8cff'}},
+      {value:25,name:'客户反馈',itemStyle:{color:'#36d1c4'}},
+      {value:20,name:'技术驱动',itemStyle:{color:'#f7b731'}},
+      {value:12,name:'竞品分析',itemStyle:{color:'#6c5ce7'}},
+      {value:8,name:'法规要求',itemStyle:{color:'#e17055'}}
+    ]}]
+}));
+
+/* ── 2. 柱形图：P0/P1/P2 ── */
+new echarts.init(document.getElementById('c_bar_priority')).setOption(opt({
+  title:{text:'P0 / P1 / P2 需求数量分布',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'category',data:['Q1','Q2','Q3','Q4'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+  legend:{top:24,textStyle:T.legendTextStyle},
+  series:[
+    {name:'P0',type:'bar',stack:'a',data:[8,12,6,10],itemStyle:{color:'#ff5c72',borderRadius:[0,0,0,0]}},
+    {name:'P1',type:'bar',stack:'a',data:[15,20,18,22],itemStyle:{color:'#f7b731'}},
+    {name:'P2',type:'bar',stack:'a',data:[25,30,28,35],itemStyle:{color:'#4f8cff',borderRadius:[4,4,0,0]}}
+  ]
+}));
+
+/* ── 3. 折线图：需求变更趋势 ── */
+new echarts.init(document.getElementById('c_line_change')).setOption(opt({
+  title:{text:'需求变更次数趋势',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'category',data:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+  series:[{type:'line',data:[5,8,6,12,9,15,11,18,14,10,7,4],smooth:true,
+    lineStyle:{color:'#36d1c4',width:2},
+    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(54,209,196,.3)'},{offset:1,color:'rgba(54,209,196,.01)'}])},
+    itemStyle:{color:'#36d1c4'},symbol:'circle',symbolSize:6}]
+}));
+
+/* ── 4. 雷达图：竞品多维度对标 ── */
+new echarts.init(document.getElementById('c_radar')).setOption(opt({
+  title:{text:'竞品多维度对标',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{bottom:0,textStyle:T.legendTextStyle},
+  radar:{indicator:[{name:'质量',max:100},{name:'成本',max:100},{name:'交付速度',max:100},{name:'创新性',max:100},{name:'合规性',max:100},{name:'客户满意度',max:100}],
+    axisName:{color:'#8a94c0'},splitArea:{areaStyle:{color:['rgba(79,140,255,.02)','rgba(79,140,255,.05)']}},
+    splitLine:{lineStyle:{color:'rgba(30,42,90,.6)'}},axisLine:{lineStyle:{color:'rgba(30,42,90,.6)'}}},
+  series:[{type:'radar',
+    data:[
+      {value:[88,72,90,85,92,78],name:'我司',areaStyle:{color:'rgba(79,140,255,.2)'},lineStyle:{color:'#4f8cff'},itemStyle:{color:'#4f8cff'}},
+      {value:[75,85,70,78,88,82],name:'竞品A',areaStyle:{color:'rgba(54,209,196,.15)'},lineStyle:{color:'#36d1c4'},itemStyle:{color:'#36d1c4'}},
+      {value:[82,68,82,70,80,75],name:'竞品B',areaStyle:{color:'rgba(247,183,49,.1)'},lineStyle:{color:'#f7b731'},itemStyle:{color:'#f7b731'}}
+    ]}]
+}));
+
+/* ── 5. 甘特图：版本更新时间轴 ── */
+new echarts.init(document.getElementById('c_gantt')).setOption(opt({
+  title:{text:'版本更新时间轴',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'time',axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'category',data:['v3.2','v3.1','v3.0','v2.5','v2.0'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  series:[{type:'custom',renderItem:function(p,api){
+    var s=api.coord([api.value(1),api.value(0)]),e=api.coord([api.value(2),api.value(0)]);
+    var h=api.size([0,1])[1]*0.5;
+    return{type:'rect',transition:['shape'],shape:{x:s[0],y:s[1]-h/2,width:e[0]-s[0],height:h},
+      style:{fill:new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:api.value(3)},{offset:1,color:api.value(4)}]),
+        stroke:'#1e2a5a',lineWidth:1},emphasis:{style:{stroke:'#4f8cff'}}};},
+  encode:{x:[1,2],y:0},
+  data:[
+    ['v2.0','2025-01-01','2025-03-15','#4f8cff','#36d1c4'],
+    ['v2.5','2025-03-01','2025-06-20','#36d1c4','#2ecc71'],
+    ['v3.0','2025-06-01','2025-10-30','#f7b731','#e17055'],
+    ['v3.1','2025-10-01','2026-01-15','#6c5ce7','#4f8cff'],
+    ['v3.2','2026-01-01','2026-06-30','#ff5c72','#f7b731']
+  ]}]
+}));
+
+/* ── 6. S曲线：累计销量/利润 ── */
+new echarts.init(document.getElementById('c_scurve')).setOption(opt({
+  title:{text:'累计销量 / 利润 随生命周期变化趋势',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{top:24,textStyle:T.legendTextStyle},
+  xAxis:{type:'category',data:['导入期','成长期','成熟期','衰退期','退市'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:[{type:'value',name:'销量',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}},
+    {type:'value',name:'利润',axisLine:T.axisLine,splitLine:{show:false},axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}}],
+  series:[
+    {name:'累计销量',type:'line',data:[120,2800,12500,15800,14200],smooth:true,
+      lineStyle:{color:'#4f8cff',width:2.5},areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(79,140,255,.3)'},{offset:1,color:'rgba(79,140,255,.01)'}])},itemStyle:{color:'#4f8cff'}},
+    {name:'累计利润',type:'line',yAxisIndex:1,data:[-50,120,980,1350,1100],smooth:true,
+      lineStyle:{color:'#36d1c4',width:2.5,type:'dashed'},itemStyle:{color:'#36d1c4'}}
+  ]
+}));
+
+/* ── 7. 里程碑标记 ── */
+new echarts.init(document.getElementById('c_milestone')).setOption(opt({
+  title:{text:'退市时间节点标注',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'category',data:['立项','研发完成','首批交付','量产','需求衰减','退市预警','正式退市'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',show:false},
+  series:[{type:'line',data:[20,45,65,85,70,40,10],smooth:true,
+    lineStyle:{color:'#4f8cff',width:2},
+    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(79,140,255,.2)'},{offset:1,color:'rgba(79,140,255,.01)'}])},
+    itemStyle:{color:'#4f8cff'},symbol:'diamond',symbolSize:10,
+    markPoint:{data:[{name:'退市预警',coord:[5,40],itemStyle:{color:'#f7b731'},symbolSize:40,label:{color:'#fff',fontSize:9}},
+      {name:'正式退市',coord:[6,10],itemStyle:{color:'#ff5c72'},symbolSize:40,label:{color:'#fff',fontSize:9}}]},
+    markLine:{data:[{xAxis:5,lineStyle:{color:'#f7b731',type:'dashed'},label:{color:'#f7b731',fontSize:9,formatter:'退市预警线'}}]}}
+  ]
+}));
+
+/* ── 8. 仪表盘：质量目标达成率 ── */
+new echarts.init(document.getElementById('c_gauge')).setOption(opt({
+  title:{text:'质量目标达成率',textStyle:T.titleTextStyle,left:'center',top:4},
+  series:[{type:'gauge',startAngle:210,endAngle:-30,min:0,max:100,
+    axisLine:{lineStyle:{width:14,color:[[0.6,'#ff5c72'],[0.8,'#f7b731'],[1,'#2ecc71']]}},
+    pointer:{width:4,itemStyle:{color:'#e0e6ff'}},
+    axisTick:{show:false},splitLine:{length:10,lineStyle:{color:'#1e2a5a'}},
+    axisLabel:{color:'#8a94c0',fontSize:9,distance:12},
+    detail:{valueAnimation:true,formatter:'{value}%',color:'#e0e6ff',fontSize:22,offsetCenter:[0,'60%']},
+    title:{show:false},
+    data:[{value:85}]}]
+}));
+
+/* ── 9. 热力图：风险等级分布 ── */
+new echarts.init(document.getElementById('c_heatmap')).setOption(opt({
+  title:{text:'风险等级分布',textStyle:T.titleTextStyle,left:'center',top:4},
+  grid:{left:60,right:40,top:40,bottom:40},
+  xAxis:{type:'category',data:['质量','交付','成本','合规','供应链'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'category',data:['产品A','产品B','产品C','产品D'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  visualMap:{min:0,max:10,show:false,inRange:{color:['#2ecc71','#f7b731','#ff5c72']}},
+  series:[{type:'heatmap',data:[[0,0,3],[0,1,7],[0,2,5],[0,3,2],[1,0,8],[1,1,4],[1,2,9],[1,3,6],
+    [2,0,5],[2,1,2],[2,2,7],[2,3,8],[3,0,1],[3,1,6],[3,2,3],[3,3,9],[4,0,6],[4,1,3],[4,2,8],[4,3,4]],
+    label:{show:true,color:'#e0e6ff',fontSize:11},itemStyle:{borderColor:'#111738',borderWidth:2}}]
+}));
+
+/* ── 10. 堆积柱形图：各部门产出+人力 ── */
+new echarts.init(document.getElementById('c_stack_bar')).setOption(opt({
+  title:{text:'各部门产出 + 人力',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{top:24,textStyle:T.legendTextStyle},
+  xAxis:{type:'category',data:['研发部','质控部','生产部','技术支持部'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+  series:[
+    {name:'产出(项)',type:'bar',stack:'a',data:[42,35,28,18],itemStyle:{color:'#4f8cff'}},
+    {name:'人力(FTE)',type:'bar',stack:'a',data:[15,12,20,8],itemStyle:{color:'#36d1c4',borderRadius:[4,4,0,0]}}
+  ]
+}));
+
+/* ── 11. 子弹图：里程碑准时率 ── */
+(function(){
+  var el=document.getElementById('c_bullet');
+  var c=echarts.init(el);
+  c.setOption(opt({
+    title:{text:'里程碑准时率（实际 vs 目标）',textStyle:T.titleTextStyle,left:'center',top:4},
+    xAxis:{type:'category',data:['需求评审','研发完成','质检通过','转产','上市'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+    yAxis:{type:'value',max:100,axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:{...T.axisLabel,formatter:'{value}%'}},
+    series:[
+      {name:'目标',type:'bar',barWidth:22,data:[95,90,92,88,90],itemStyle:{color:'rgba(79,140,255,.18)',borderRadius:4},z:1},
+      {name:'实际',type:'bar',barWidth:12,data:[92,78,88,82,95],itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#4f8cff'},{offset:1,color:'#36d1c4'}]),borderRadius:4},z:2}
+    ],
+    legend:{top:24,textStyle:T.legendTextStyle}
+  }));
+})();
+
+/* ── 12. 漏斗图：质检全流程 ── */
+new echarts.init(document.getElementById('c_funnel')).setOption(opt({
+  title:{text:'质检全流程漏斗',textStyle:T.titleTextStyle,left:'center',top:4},
+  series:[{type:'funnel',left:'10%',width:'80%',top:30,bottom:10,min:0,max:100,
+    label:{position:'inside',color:'#e0e6ff',fontSize:12},
+    itemStyle:{borderColor:'#111738',borderWidth:1},
+    data:[
+      {value:100,name:'Q项通过率',itemStyle:{color:'#4f8cff'}},
+      {value:85,name:'交付完整',itemStyle:{color:'#6c5ce7'}},
+      {value:72,name:'缺陷密度',itemStyle:{color:'#36d1c4'}},
+      {value:60,name:'标准确定',itemStyle:{color:'#f7b731'}},
+      {value:45,name:'放行',itemStyle:{color:'#e17055'}},
+      {value:30,name:'转产',itemStyle:{color:'#2ecc71'}},
+      {value:20,name:'上市销售',itemStyle:{color:'#ff5c72'}}
+    ]}]
+}));
+
+/* ── 13. 气泡图：缺陷密度 vs 严重度 ── */
+new echarts.init(document.getElementById('c_bubble')).setOption(opt({
+  title:{text:'缺陷密度 vs 严重度',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'value',name:'缺陷密度',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}},
+  yAxis:{type:'value',name:'严重度',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}},
+  series:[{type:'scatter',symbolSize:function(d){return d[2]*3;},
+    data:[[12,85,18],[20,72,14],[8,90,22],[35,60,10],[15,78,16],[28,65,12],[5,95,25],[40,50,8],[18,80,13],[25,68,11]],
+    itemStyle:{color:new echarts.graphic.LinearGradient(0,0,1,1,[{offset:0,color:'#4f8cff'},{offset:1,color:'#36d1c4'}]),
+      opacity:.7,borderColor:'#4f8cff',borderWidth:1}}]
+}));
+
+/* ── 14. 散点图：价格-成本-毛利 ── */
+new echarts.init(document.getElementById('c_scatter')).setOption(opt({
+  title:{text:'价格 - 成本 - 毛利',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'value',name:'价格',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}},
+  yAxis:{type:'value',name:'成本',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}},
+  series:[{type:'scatter',symbolSize:function(d){return d[2]*2;},
+    data:[[100,55,45],[120,60,50],[80,48,32],[150,70,60],[95,50,45],[130,65,55],[110,58,42],[140,68,62],[90,52,38],[160,75,65]],
+    itemStyle:{color:function(p){return p.value[2]>50?'#2ecc71':'#f7b731';},opacity:.8,borderColor:'rgba(255,255,255,.2)',borderWidth:1}}]
+}));
+
+/* ── 15. 矩阵热力图：齐套率+排期符合 ── */
+new echarts.init(document.getElementById('c_matrix_heat')).setOption(opt({
+  title:{text:'齐套率 + 排期符合',textStyle:T.titleTextStyle,left:'center',top:4},
+  grid:{left:80,right:40,top:40,bottom:40},
+  xAxis:{type:'category',data:['齐套率','排期符合','产能匹配','物料到位'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'category',data:['产线1','产线2','产线3'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  visualMap:{min:0,max:100,show:false,inRange:{color:['#ff5c72','#f7b731','#2ecc71']}},
+  series:[{type:'heatmap',data:[[0,0,88],[0,1,72],[0,2,65],[1,0,92],[1,1,68],[1,2,78],[2,0,75],[2,1,82],[2,2,58],[3,0,90],[3,1,60],[3,2,85]],
+    label:{show:true,color:'#e0e6ff',fontSize:11,formatter:function(p){return p.value[2]+'%';}},itemStyle:{borderColor:'#111738',borderWidth:2}}]
+}));
+
+/* ── 16. 决策树/流程图：变更影响范围 ── */
+new echarts.init(document.getElementById('c_tree')).setOption(opt({
+  title:{text:'变更影响范围',textStyle:T.titleTextStyle,left:'center',top:4},
+  series:[{type:'tree',data:[{name:'变更',children:[
+    {name:'功能变更(A)',children:[{name:'版本回退'},{name:'补丁发布'}]},
+    {name:'工艺变更(B)',children:[{name:'产线调整'},{name:'物料替换'}]},
+    {name:'规格变更(C)',children:[{name:'质检更新'},{name:'证书变更'}]}
+  ]}],
+  top:30,bottom:10,left:'10%',right:'20%',
+  label:{color:'#e0e6ff',fontSize:11,backgroundColor:'rgba(79,140,255,.12)',padding:[4,8],borderRadius:4},
+  leaves:{label:{color:'#8a94c0',backgroundColor:'rgba(54,209,196,.08)'}},
+  lineStyle:{color:'rgba(79,140,255,.4)',curveness:.5},
+  itemStyle:{color:'#4f8cff',borderColor:'#4f8cff',borderWidth:1},
+  expandAndCollapse:false}]
+}));
+
+/* ── 17. 对比柱形图：变更前后性能 ── */
+new echarts.init(document.getElementById('c_compare_bar')).setOption(opt({
+  title:{text:'变更前后性能对比',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{top:24,textStyle:T.legendTextStyle},
+  xAxis:{type:'category',data:['响应速度','稳定性','吞吐量','准确率','可用性'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+  series:[
+    {name:'变更前',type:'bar',barGap:'10%',data:[72,85,68,90,78],itemStyle:{color:'rgba(79,140,255,.5)',borderRadius:[4,4,0,0]}},
+    {name:'变更后',type:'bar',data:[88,92,82,95,90],itemStyle:{color:'#36d1c4',borderRadius:[4,4,0,0]}}
+  ]
+}));
+
+/* ── 18. 箱线图：放行周期分布 ── */
+new echarts.init(document.getElementById('c_boxplot')).setOption(opt({
+  title:{text:'放行周期分布（天）',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'category',data:['批次1','批次2','批次3','批次4','批次5'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+  series:[{type:'boxplot',data:[[5,8,12,16,22],[3,7,10,14,20],[6,9,13,17,25],[4,8,11,15,21],[7,10,14,18,28]],
+    itemStyle:{color:'rgba(79,140,255,.3)',borderColor:'#4f8cff',borderWidth:1.5}}]
+}));
+
+/* ── 19. 帕累托图：下线原因分布 ── */
+(function(){
+  var causes=['原材料缺陷','工艺偏差','设备故障','人员操作','环境因素'];
+  var vals=[35,25,18,14,8];
+  var cum=[];
+  var s=0;var total=vals.reduce(function(a,b){return a+b;},0);
+  vals.forEach(function(v){s+=v;cum.push(Math.round(s/total*100));});
+  new echarts.init(document.getElementById('c_pareto')).setOption(opt({
+    title:{text:'下线原因分布（帕累托）',textStyle:T.titleTextStyle,left:'center',top:4},
+    xAxis:{type:'category',data:causes,axisLine:T.axisLine,axisLabel:T.axisLabel},
+    yAxis:[{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+      {type:'value',max:100,axisLabel:{...T.axisLabel,formatter:'{value}%'},splitLine:{show:false}}],
+    series:[
+      {type:'bar',data:vals,itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#4f8cff'},{offset:1,color:'#6c5ce7'}]),borderRadius:[4,4,0,0]}},
+      {type:'line',yAxisIndex:1,data:cum,lineStyle:{color:'#f7b731',width:2},itemStyle:{color:'#f7b731'},
+        label:{show:true,color:'#f7b731',fontSize:10,formatter:'{c}%'}}
+    ]
+  }));
+})();
+
+/* ── 20. 堆积面积图：呆滞库存价值 ── */
+new echarts.init(document.getElementById('c_area')).setOption(opt({
+  title:{text:'呆滞库存价值趋势',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{top:24,textStyle:T.legendTextStyle},
+  xAxis:{type:'category',data:['1月','2月','3月','4月','5月','6月'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel},
+  series:[
+    {name:'原料库存',type:'line',stack:'a',areaStyle:{color:'rgba(79,140,255,.3)'},data:[120,135,128,142,155,148],lineStyle:{color:'#4f8cff'},itemStyle:{color:'#4f8cff'}},
+    {name:'半成品库存',type:'line',stack:'a',areaStyle:{color:'rgba(54,209,196,.3)'},data:[80,75,90,85,92,88],lineStyle:{color:'#36d1c4'},itemStyle:{color:'#36d1c4'}},
+    {name:'成品库存',type:'line',stack:'a',areaStyle:{color:'rgba(247,183,49,.3)'},data:[50,62,55,70,65,58],lineStyle:{color:'#f7b731'},itemStyle:{color:'#f7b731'}}
+  ]
+}));
+
+/* ── 21. 桑基图：问题流向分析 ── */
+new echarts.init(document.getElementById('c_sankey')).setOption(opt({
+  title:{text:'问题流向分析',textStyle:T.titleTextStyle,left:'center',top:4},
+  series:[{type:'sankey',layout:'none',left:20,right:20,top:40,bottom:10,nodeWidth:18,nodeGap:14,
+    label:{color:'#e0e6ff',fontSize:11},
+    lineStyle:{color:'gradient',opacity:.35,curveness:.5},
+    itemStyle:{borderWidth:0},
+    data:[{name:'内部Bug'},{name:'客户反馈'},{name:'召回/补发'},{name:'内部解决'},{name:'升级变更'},{name:'生产缺陷'},{name:'设计问题'}],
+    links:[
+      {source:'内部Bug',target:'客户反馈',value:30},
+      {source:'内部Bug',target:'内部解决',value:45},
+      {source:'客户反馈',target:'召回/补发',value:20},
+      {source:'客户反馈',target:'升级变更',value:25},
+      {source:'生产缺陷',target:'内部Bug',value:35},
+      {source:'设计问题',target:'内部Bug',value:25},
+      {source:'生产缺陷',target:'客户反馈',value:15},
+      {source:'内部解决',target:'升级变更',value:20}
+    ]}]
+}));
+
+/* ── 22. 柱形图：问题复发率 ── */
+new echarts.init(document.getElementById('c_recurrence')).setOption(opt({
+  title:{text:'问题复发率按产品分类',textStyle:T.titleTextStyle,left:'center',top:4},
+  xAxis:{type:'category',data:['产品A','产品B','产品C','产品D','产品E'],axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:{type:'value',max:100,axisLabel:{...T.axisLabel,formatter:'{value}%'},axisLine:T.axisLine,splitLine:T.splitLine},
+  series:[{type:'bar',data:[75,58,42,30,18],
+    itemStyle:{color:function(p){return p.value>60?'#ff5c72':p.value>40?'#f7b731':'#2ecc71';},borderRadius:[4,4,0,0]},
+    label:{show:true,color:'#e0e6ff',fontSize:10,position:'top',formatter:'{c}%'}}]
+}));
+
+/* ── 23. 双轴组合图：销售额 + 毛利率 ── */
+new echarts.init(document.getElementById('c_dual_axis')).setOption(opt({
+  title:{text:'月度销售额 & 毛利率趋势',textStyle:T.titleTextStyle,left:'center',top:4},
+  legend:{top:24,textStyle:T.legendTextStyle},
+  xAxis:{type:'category',data:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    axisLine:T.axisLine,axisLabel:T.axisLabel},
+  yAxis:[{type:'value',name:'销售额(万)',axisLine:T.axisLine,splitLine:T.splitLine,axisLabel:T.axisLabel,nameTextStyle:{color:'#8a94c0'}},
+    {type:'value',name:'毛利率(%)',max:80,axisLine:T.axisLine,splitLine:{show:false},axisLabel:{...T.axisLabel,formatter:'{value}%'},nameTextStyle:{color:'#8a94c0'}}],
+  series:[
+    {name:'销售额',type:'bar',data:[85,92,78,110,125,138,142,155,148,162,170,180],
+      itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#4f8cff'},{offset:1,color:'rgba(79,140,255,.4)'}]),borderRadius:[4,4,0,0]}},
+    {name:'毛利率',type:'line',yAxisIndex:1,data:[45,48,42,52,55,58,60,62,59,63,65,62],
+      lineStyle:{color:'#f7b731',width:2.5},itemStyle:{color:'#f7b731'},
+      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(247,183,49,.15)'},{offset:1,color:'rgba(247,183,49,.01)'}])}}
+  ]
+}));
+
+/* ── Resize ── */
+window.addEventListener('resize',function(){
+  document.querySelectorAll('.chart-box').forEach(function(el){
+    var inst=echarts.getInstanceByDom(el);
+    if(inst)inst.resize();
+  });
+});
+</script>
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"b9f1e700-bb6d-4c11-86c2-c0072768701d","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"bb6c6e41-ef2a-4924-9bca-41fb5d82970e","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
